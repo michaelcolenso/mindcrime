@@ -1,168 +1,61 @@
 <script lang="ts">
-	// even though it works typescript complains about onemblaInit instead of on:emblaInit
-	import type { EmblaCarouselType, EmblaOptionsType } from 'embla-carousel';
-	import emblaCarouselSvelte from 'embla-carousel-svelte';
-
-	import { Aperture, Dice6, Drama, Factory, Smile } from 'lucide-svelte';
+	import { Zap, FileText, Link, Clock, Shield, TrendingUp } from 'lucide-svelte';
 	import Container from './Container.svelte';
 
-	let emblaApi: EmblaCarouselType;
-	let index = $state(0);
-
-	const options: EmblaOptionsType = {
-		align: 'center',
-		loop: true,
-		inViewThreshold: 1
-	};
-
-	function updateSelected(emblaApi: EmblaCarouselType): void {
-		let slidesIndexes = emblaApi.slidesInView();
-		if (slidesIndexes.length > 0) {
-			index = slidesIndexes[0];
+	const features = [
+		{
+			icon: Zap,
+			title: '60-Second Generation',
+			desc: 'Describe your project in plain English. Claude AI generates a complete, professional proposal instantly — executive summary, scope, milestones, pricing, and terms.'
+		},
+		{
+			icon: FileText,
+			title: 'Professional Structure',
+			desc: 'Every proposal follows best practices: executive summary, scope of work, out-of-scope items, milestone breakdown, pricing table, and payment terms. Clients trust it.'
+		},
+		{
+			icon: Link,
+			title: 'Shareable Client Links',
+			desc: 'Send clients a beautiful, read-only link to review their proposal. No PDFs to email. Just share the link and they see a polished, branded document.'
+		},
+		{
+			icon: Clock,
+			title: 'Save 4+ Hours Per Proposal',
+			desc: 'The average freelancer spends 3-8 hours writing proposals. ScopeWise does it in 60 seconds. Use that time for billable work or send 10x more proposals.'
+		},
+		{
+			icon: Shield,
+			title: 'Scope Creep Protection',
+			desc: "A clear scope of work with explicit 'not included' sections means fewer disputes and change requests. Protect your time with precise, enforceable deliverables."
+		},
+		{
+			icon: TrendingUp,
+			title: 'Higher Win Rate',
+			desc: 'Professional proposals signal professional service. Clients choose the consultant who sends a polished, detailed proposal — not a hasty email with a price.'
 		}
-	}
-
-	function onInit(event: { detail: EmblaCarouselType }) {
-		emblaApi = event.detail;
-		emblaApi.on('slidesInView', updateSelected);
-	}
-
-	function setIndex(newIndex: number) {
-		index = newIndex;
-		emblaApi.scrollTo(index);
-	}
+	];
 </script>
 
-<Container>
-	<div class="py-24 md:py-32">
-		<h2 class="font-bold text-2xl md:text-4xl mb-16 text-center">
-			Everything you need to fix your problem right now
-		</h2>
-		<!-- on mobile show small icons without text -->
-		<div class="w-fit mx-auto mb-5 sm:hidden">
-			<div class="join">
-				<button class:btn-primary={index === 0} class="join-item btn" onclick={() => setIndex(0)}
-					><Smile />
-				</button>
-				<button class:btn-primary={index === 1} class="join-item btn" onclick={() => setIndex(1)}
-					><Dice6 /></button
-				>
-				<button class:btn-primary={index === 2} class="join-item btn" onclick={() => setIndex(2)}
-					><Aperture /></button
-				>
-				<button class:btn-primary={index === 3} class="join-item btn" onclick={() => setIndex(3)}
-					><Drama /></button
-				>
-				<button class:btn-primary={index === 4} class="join-item btn" onclick={() => setIndex(4)}
-					><Factory /></button
-				>
-			</div>
+<div class="bg-base-200/50 py-20">
+	<Container>
+		<div class="text-center mb-16">
+			<h2 class="text-3xl sm:text-4xl font-bold mb-4">Everything you need to win the project</h2>
+			<p class="text-base-content/60 text-lg max-w-2xl mx-auto">
+				ScopeWise handles the paperwork so you can focus on the actual work.
+			</p>
 		</div>
-
-		<!-- on desktop show large icons with text -->
-		<div class="hidden w-fit mx-auto space-x-10 sm:flex">
-			<button
-				class:text-primary={index === 0}
-				class="flex flex-col items-center"
-				onclick={() => setIndex(0)}
-				><Smile class="w-10 h-10" />
-				<div class="text-xl font-semibold mt-2">Smile</div>
-			</button>
-			<button
-				class:text-primary={index === 1}
-				class="flex flex-col items-center"
-				onclick={() => setIndex(1)}
-				><Dice6 class="w-10 h-10" />
-				<div class="text-xl font-semibold mt-2">Dice</div></button
-			>
-			<button
-				class:text-primary={index === 2}
-				class="flex flex-col items-center"
-				onclick={() => setIndex(2)}
-				><Aperture class="w-10 h-10" />
-				<div class="text-xl font-semibold mt-2">Aperture</div></button
-			>
-			<button
-				class:text-primary={index === 3}
-				class="flex flex-col items-center"
-				onclick={() => setIndex(3)}
-				><Drama class="w-10 h-10" />
-				<div class="text-xl font-semibold mt-2">Drama</div></button
-			>
-			<button
-				class:text-primary={index === 4}
-				class="flex flex-col items-center"
-				onclick={() => setIndex(4)}
-				><Factory class="w-10 h-10" />
-				<div class="text-xl font-bold mt-2">Factory</div></button
-			>
-		</div>
-		<div class="embla pt-14">
-			<div
-				class="embla__viewport"
-				use:emblaCarouselSvelte={{ options, plugins: [] }}
-				onemblaInit={onInit}
-			>
-				<div class="embla__container">
-					<div class="embla__slide">
-						<div
-							class="rounded-xl flex items-center justify-center text-xl font-bold h-80 bg-slate-100"
-						>
-							<span>feature 1</span>
+		<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+			{#each features as feature}
+				<div class="card bg-base-100 shadow-sm hover:shadow-md transition-shadow">
+					<div class="card-body">
+						<div class="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center mb-3">
+							<svelte:component this={feature.icon} size={20} class="text-primary" />
 						</div>
-					</div>
-					<div class="embla__slide">
-						<div
-							class="rounded-xl flex items-center justify-center text-xl font-bold h-80 bg-slate-100"
-						>
-							<span>feature 2</span>
-						</div>
-					</div>
-					<div class="embla__slide">
-						<div
-							class="rounded-xl flex items-center justify-center text-xl font-bold h-80 bg-slate-100"
-						>
-							<span>feature 3</span>
-						</div>
-					</div>
-					<div class="embla__slide">
-						<div
-							class="rounded-xl flex items-center justify-center text-xl font-bold h-80 bg-slate-100"
-						>
-							<span>feature 4</span>
-						</div>
-					</div>
-					<div class="embla__slide">
-						<div
-							class="rounded-xl flex items-center justify-center text-xl font-bold h-80 bg-slate-100"
-						>
-							<span>feature 5</span>
-						</div>
+						<h3 class="font-bold text-lg mb-2">{feature.title}</h3>
+						<p class="text-base-content/60 text-sm leading-relaxed">{feature.desc}</p>
 					</div>
 				</div>
-			</div>
+			{/each}
 		</div>
-	</div>
-</Container>
-
-<style>
-	.embla {
-		margin: auto;
-		--slide-height: 19rem;
-		--slide-spacing: 1rem;
-		--slide-size: 70%;
-	}
-	.embla__viewport {
-		overflow: hidden;
-	}
-	.embla__container {
-		backface-visibility: hidden;
-		display: flex;
-		touch-action: pan-y pinch-zoom;
-	}
-	.embla__slide {
-		flex: 0 0 var(--slide-size);
-		min-width: 0;
-		padding-left: var(--slide-spacing);
-	}
-</style>
+	</Container>
+</div>

@@ -1,7 +1,11 @@
 import { json, type RequestEvent } from '@sveltejs/kit';
 import { stripeClient } from '../stripe';
-
 import { STRIPE_WEBHOOK_SECRET } from '$env/static/private';
+import { updateSubscriptionFromStripe } from '$lib/server/database/subscription.model';
+import { db } from '$lib/server/database/db';
+import { userTable } from '$lib/server/database/schema';
+import { eq } from 'drizzle-orm';
+import type { Plan } from '$lib/server/database/subscription.model';
 
 function toBuffer(ab: ArrayBuffer): Buffer {
 	const buf = Buffer.alloc(ab.byteLength);
@@ -12,83 +16,154 @@ function toBuffer(ab: ArrayBuffer): Buffer {
 	return buf;
 }
 
+function priceIdToPlan(priceId: string): Plan {
+	const { STRIPE_PRO_PRICE_ID, STRIPE_STARTER_PRICE_ID } = process.env;
+	if (priceId === STRIPE_PRO_PRICE_ID) return 'pro';
+	if (priceId === STRIPE_STARTER_PRICE_ID) return 'starter';
+	return 'free';
+}
+
 export async function POST(event: RequestEvent) {
-	// export async function post(req: Request<any, { data: any; type: any }>): Promise<Response> {
 	const req = event.request;
-	// let data;
-	let eventType: string;
+	let stripeEvent: ReturnType<typeof stripeClient.webhooks.constructEvent>;
+
 	if (STRIPE_WEBHOOK_SECRET) {
-		// let event;
 		const _rawBody = await req.arrayBuffer();
 		const payload = toBuffer(_rawBody);
-
-		// SvelteKit may sometimes modify the incoming request body
-		// However, Stripe requires the exact body it sends to construct an Event
-		// To avoid unintended SvelteKit modifications, we can use this workaround:
-		// const payload = Buffer.from(req.rawBody);
 		const signature = req.headers.get('stripe-signature') as string;
+
 		try {
-			const event = stripeClient.webhooks.constructEvent(payload, signature, STRIPE_WEBHOOK_SECRET);
-			//const data = event.data;
-			eventType = event.type;
+			stripeEvent = stripeClient.webhooks.constructEvent(payload, signature, STRIPE_WEBHOOK_SECRET);
 		} catch (err) {
-			console.error(err);
-			return {
-				status: 500,
-				headers: {},
-				body: JSON.stringify({
-					error: err
-				})
-			};
+			console.error('Webhook signature verification failed:', err);
+			return json({ error: 'Invalid signature' }, { status: 400 });
 		}
 	} else {
-		// data = req.body.data;
-		eventType = ((await req.formData()).get('type') as string).toString();
+		return json({ error: 'Webhook secret not configured' }, { status: 500 });
 	}
 
-	switch (eventType) {
-		case 'checkout.session.completed':
-			// Payment is successful and the subscription is created.
-			// You should provision the subscription and save the customer ID to your database.
-			console.log('Event: checkout.session.completed');
-			break;
-		case 'invoice.paid':
-			// Continue to provision the subscription as payments continue to be made.
-			// Store the status in your database and check when a user accesses your service.
-			// This approach helps you avoid hitting rate limits.
-			console.log('Event: invoice.paid');
-			break;
-		case 'invoice.payment_failed':
-			// The payment failed or the customer does not have a valid payment method.
-			// The subscription becomes past_due. Notify your customer and send them to the
-			// customer portal to update their payment information.
-			console.log('Event: invoice.payment_failed');
-			break;
+	try {
+		switch (stripeEvent.type) {
+			case 'checkout.session.completed': {
+				const session = stripeEvent.data.object as {
+					customer?: string | null;
+					customer_email?: string | null;
+					subscription?: string | null;
+					metadata?: Record<string, string>;
+					client_reference_id?: string | null;
+				};
 
-		case 'customer.subscription.updated':
-			// Listen to this to monitor updates to the subscription quantity.
-			// When you receive this event, check the subscription.items.data[0].quantity
-			// attribute to find the quantity the customer is subscribed to.
-			// Then, grant access to the new quantity.
+				const customerId = session.customer as string;
+				const subscriptionId = session.subscription as string;
+				const userId = session.client_reference_id ?? session.metadata?.user_id;
 
-			console.log('Event: customer.subscription.updated');
-			break;
-		case 'customer.subscription.deleted':
-			// Listen to this to monitor subscription cancellations. When you receive this event,
-			// revoke the customer’s access to the product.If you configure the portal to cancel
-			// subscriptions at the end of a billing period, listen to the customer.subscription.
-			// updated event to be notified of cancellations before they occur.
-			// If cancel_at_period_end is true, the subscription is canceled at the end of its billing period.
-			// If a customer changes their mind, they can reactivate their subscription prior to
-			// the end of the billing period.When they do this, a customer.subscription.updated
-			// event is sent.Check that cancel_at_period_end is false to confirm that they
-			// reactivated their subscription.
+				if (!userId || !subscriptionId) break;
 
-			console.log('Event: customer.subscription.deleted');
-			break;
-		default:
-			// Unhandled event type
-			console.log(eventType);
+				const subscription = await stripeClient.subscriptions.retrieve(subscriptionId);
+				const priceId = subscription.items.data[0]?.price?.id ?? '';
+				const plan = priceIdToPlan(priceId);
+
+				await updateSubscriptionFromStripe({
+					stripe_customer_id: customerId,
+					stripe_subscription_id: subscriptionId,
+					plan,
+					status: subscription.status,
+					period_start: new Date(subscription.current_period_start * 1000),
+					period_end: new Date(subscription.current_period_end * 1000),
+					user_id: userId
+				});
+
+				console.log(`Subscription activated: user=${userId} plan=${plan}`);
+				break;
+			}
+
+			case 'invoice.paid': {
+				const invoice = stripeEvent.data.object as {
+					customer?: string | null;
+					subscription?: string | null;
+				};
+
+				if (!invoice.subscription) break;
+
+				const subscription = await stripeClient.subscriptions.retrieve(invoice.subscription as string);
+				const priceId = subscription.items.data[0]?.price?.id ?? '';
+				const plan = priceIdToPlan(priceId);
+
+				// Find user by stripe customer ID
+				const users = await db
+					.select()
+					.from(userTable)
+					.where(eq(userTable.stripe_customer_id, invoice.customer as string));
+
+				if (users[0]) {
+					await updateSubscriptionFromStripe({
+						stripe_customer_id: invoice.customer as string,
+						stripe_subscription_id: invoice.subscription as string,
+						plan,
+						status: subscription.status,
+						period_start: new Date(subscription.current_period_start * 1000),
+						period_end: new Date(subscription.current_period_end * 1000),
+						user_id: users[0].id
+					});
+					console.log(`Subscription renewed: user=${users[0].id} plan=${plan}`);
+				}
+				break;
+			}
+
+			case 'invoice.payment_failed': {
+				const invoice = stripeEvent.data.object as { customer?: string | null; subscription?: string | null };
+				const users = await db
+					.select()
+					.from(userTable)
+					.where(eq(userTable.stripe_customer_id, invoice.customer as string));
+
+				if (users[0] && invoice.subscription) {
+					const subscription = await stripeClient.subscriptions.retrieve(invoice.subscription as string);
+					await updateSubscriptionFromStripe({
+						stripe_customer_id: invoice.customer as string,
+						stripe_subscription_id: invoice.subscription as string,
+						plan: 'free',
+						status: 'past_due',
+						period_start: new Date(subscription.current_period_start * 1000),
+						period_end: new Date(subscription.current_period_end * 1000),
+						user_id: users[0].id
+					});
+				}
+				break;
+			}
+
+			case 'customer.subscription.deleted': {
+				const subscription = stripeEvent.data.object as {
+					id: string;
+					customer: string | null;
+					current_period_start: number;
+					current_period_end: number;
+				};
+				const users = await db
+					.select()
+					.from(userTable)
+					.where(eq(userTable.stripe_customer_id, subscription.customer as string));
+
+				if (users[0]) {
+					await updateSubscriptionFromStripe({
+						stripe_customer_id: subscription.customer as string,
+						stripe_subscription_id: subscription.id,
+						plan: 'free',
+						status: 'canceled',
+						period_start: new Date(subscription.current_period_start * 1000),
+						period_end: new Date(subscription.current_period_end * 1000),
+						user_id: users[0].id
+					});
+				}
+				break;
+			}
+
+			default:
+				console.log(`Unhandled event: ${stripeEvent.type}`);
+		}
+	} catch (err) {
+		console.error('Webhook handler error:', err);
+		return json({ error: 'Webhook handler failed' }, { status: 500 });
 	}
 
 	return json({ received: true });
