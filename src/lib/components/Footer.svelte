@@ -1,33 +1,37 @@
-<script>
-	import { Ship } from 'lucide-svelte';
-	import Container from './Container.svelte';
+<script lang="ts">
+	import { FileText } from 'lucide-svelte';
 	import { PUBLIC_PROJECT_NAME } from '$env/static/public';
 </script>
 
 <footer class="footer p-10 bg-base-200 text-base-content">
 	<aside>
-		<div class="flex items-center h-fit space-x-2">
-			<Ship class="h-8 w-8" />
+		<div class="flex items-center gap-2">
+			<FileText class="h-6 w-6 text-primary" />
 			<div class="text-xl font-bold">{PUBLIC_PROJECT_NAME}</div>
 		</div>
-		<div>Providing reliable tech since 1992</div>
+		<p class="text-base-content/60 max-w-xs">
+			AI-powered project proposals for freelancers and independent consultants.
+		</p>
 	</aside>
 
 	<nav>
-		<h6 class="footer-title">LINKS</h6>
-		<a class="link link-hover" href="/">Home</a>
-		<a class="link link-hover" href="/">About</a>
+		<h6 class="footer-title">Product</h6>
+		<a class="link link-hover" href="/#features">Features</a>
+		<a class="link link-hover" href="/#pricing">Pricing</a>
+		<a class="link link-hover" href="/#faq">FAQ</a>
+		<a class="link link-hover" href="/dashboard">Dashboard</a>
 	</nav>
+
 	<nav>
 		<h6 class="footer-title">Legal</h6>
 		<a class="link link-hover" href="/terms-of-use">Terms of use</a>
 		<a class="link link-hover" href="/privacy-policy">Privacy policy</a>
-		<a class="link link-hover" href="mailto:someone@example.com">Contact</a>
+		<a class="link link-hover" href="mailto:hello@scopewise.app">Contact</a>
 	</nav>
+
 	<div>
-		<h2 class="font-bold mb-4 text-base-content text-opacity-60">SOCIALS</h2>
-		<div class="text-opacity-60 text-base-content">
-			you can put some social icons here <br /> or a newsletter signup or whatever
-		</div>
+		<h6 class="footer-title">Get Started</h6>
+		<a href="/login" class="btn btn-primary btn-sm">Create free account</a>
+		<p class="text-xs text-base-content/50 mt-2">2 proposals free · No credit card required</p>
 	</div>
 </footer>

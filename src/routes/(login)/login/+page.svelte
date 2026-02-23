@@ -3,7 +3,7 @@
 	import { tick } from 'svelte';
 	import Google from '$lib/components/icons/Google.svelte';
 	import { superForm } from 'sveltekit-superforms';
-	import { Mail, Laugh } from 'lucide-svelte';
+	import { Mail, FileText } from 'lucide-svelte';
 
 	const { data } = $props();
 
@@ -13,7 +13,6 @@
 
 	const { enhance, errors, submitting } = superForm(data.form, {
 		onResult(event) {
-			console.log(event);
 			if (event.result.type === 'success') {
 				email_sent = true;
 			}
@@ -30,83 +29,88 @@
 </script>
 
 <svelte:head>
-	<title>Svelte Saas Boilerplate</title>
-	<meta
-		name="description"
-		content="The free and open-source Svelte 5 and SvelteKit SaaS boilerplate that gets you shipping fast. Includes authentication with magic link and Google, email, styling with Tailwind CSS and DaisyUI, and Turso for the database."
-	/>
+	<title>Sign in — {PUBLIC_PROJECT_NAME}</title>
+	<meta name="description" content="Sign in to generate AI-powered project proposals in 60 seconds." />
 </svelte:head>
 
-<div class="flex p-5 items-center justify-center h-screen">
-	<div class="card p-5 flex flex-col w-full max-w-[470px]">
+<div class="flex p-5 items-center justify-center min-h-screen">
+	<div class="card bg-base-100 shadow-xl ring-1 ring-base-200 p-8 flex flex-col w-full max-w-md">
 		{#if email_sent}
 			<div class="text-center">
-				<Mail size="40" class="mx-auto my-4" />
-				<div class="text-3xl font-bold leading-none tracking-tight">Check your inbox</div>
-				<div class="mt-4 text-muted-primary text-lg opacity-80 max-w-[32ch] mx-auto">
-					We've sent you an activation link. Please be sure to check your spam folder too.
+				<div class="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center mx-auto mb-4">
+					<Mail size={24} class="text-primary" />
 				</div>
+				<div class="text-2xl font-bold mb-3">Check your inbox</div>
+				<div class="text-base-content/60 text-base max-w-[32ch] mx-auto">
+					We sent you a magic link. Click it to sign in instantly — no password needed.
+				</div>
+				<p class="text-xs text-base-content/40 mt-4">Check your spam folder if you don't see it.</p>
 			</div>
 		{:else}
-			<div class="my-4 flex flex-col space-y-1.5 text-center w-full">
-				<div class="mx-auto w-fit">
-					<Laugh class="h-12 w-12 my-4" />
-				</div>
-				<div class="mx-auto text-3xl font-semibold leading-none tracking-tight">
-					Welcome to {PUBLIC_PROJECT_NAME}
-				</div>
-			</div>
-			{#if data.user}
-				<a href="/" class="btn btn-primary font-semibold text-md md:text-lg mt-4 w-full"
-					>Continue with current account
+			<div class="mb-6 text-center">
+				<a href="/" class="inline-flex items-center gap-2 mb-6">
+					<FileText class="text-primary" size={24} />
+					<span class="text-xl font-bold">{PUBLIC_PROJECT_NAME}</span>
 				</a>
-				<p class="opacity-70 text-center text-sm my-3">
-					Signed in as {data.user.email}
+				<div class="text-2xl font-bold mb-1">
+					{data.user ? 'Welcome back' : 'Get started free'}
+				</div>
+				<p class="text-base-content/60 text-sm">
+					{data.user ? 'You are already signed in.' : '2 proposals free. No credit card required.'}
 				</p>
-			{:else}
-				<a href="/login/google" class="btn btn-primary font-semibold text-md md:text-lg mt-4 w-full"
-					><Google class="w-4 mr-3" />Continue with Google
-				</a>{/if}
+			</div>
 
 			{#if data.user}
-				<form method="post" action="/login?/signout">
-					<button type="submit" class="btn btn-ghost font-semibold text-md sm:text-lg mt-2 w-full"
-						>Sign in with a different account
+				<a href="/dashboard" class="btn btn-primary font-semibold text-md w-full">
+					Go to Dashboard
+				</a>
+				<p class="text-center text-sm text-base-content/50 mt-3">
+					Signed in as {data.user.email}
+				</p>
+				<form method="post" action="/login?/signout" class="mt-3">
+					<button type="submit" class="btn btn-ghost text-sm w-full text-error">
+						Sign out
 					</button>
 				</form>
 			{:else}
+				<a href="/login/google" class="btn btn-primary font-semibold text-md w-full gap-2">
+					<Google class="w-4" />Continue with Google
+				</a>
+
+				<div class="divider text-xs text-base-content/40">or</div>
+
 				<form method="post" action="/login?/login_with_email" use:enhance>
 					<input
 						bind:this={email_input}
-						placeholder="Email"
+						placeholder="your@email.com"
 						type="email"
 						name="email"
-						class="input w-full my-5"
+						class="input input-bordered w-full mb-3"
 						class:hidden={!show_email_input}
 					/>
 					{#if $errors.email}
-						<span class="text-red-500 text-xs mt-2 ml-1">{$errors.email}</span>
+						<span class="text-red-500 text-xs mb-2 block">{$errors.email}</span>
 					{/if}
 
 					{#if show_email_input}
-						<button
-							type="submit"
-							disabled={$submitting}
-							class="btn font-semibold text-md sm:text-lg w-full"
-						>
+						<button type="submit" disabled={$submitting} class="btn btn-outline w-full">
 							{#if $submitting}
 								<span class="loading loading-spinner loading-xs mr-2"></span>
 							{/if}
-							<span>Continue</span>
+							Send magic link
 						</button>
 					{:else}
-						<button
-							onclick={handleEmail}
-							type="button"
-							class="btn font-semibold text-md sm:text-lg mt-4 w-full"
-							>Continue with email
-						</button>{/if}
+						<button onclick={handleEmail} type="button" class="btn btn-outline w-full">
+							Continue with email
+						</button>
+					{/if}
 				</form>
+
+				<p class="text-xs text-center text-base-content/40 mt-6">
+					By signing up, you agree to our
+					<a href="/terms-of-use" class="link">Terms</a> and
+					<a href="/privacy-policy" class="link">Privacy Policy</a>.
+				</p>
 			{/if}
 		{/if}
 	</div>

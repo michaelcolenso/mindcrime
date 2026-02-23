@@ -1,31 +1,93 @@
-<script>
-	import { Ship } from 'lucide-svelte';
+<script lang="ts">
+	import { Zap, ArrowRight } from 'lucide-svelte';
 	import Container from './Container.svelte';
 </script>
 
-<!-- The exact line breaks and widths of various sections should depend on the copy. Make sure the copy looks good on
-all screen sizes (not the case here) -->
 <Container>
-	<div class="flex flex-col md:flex-row py-8 sm:py-20">
-		<div>
-			<div class="text-center text-4xl sm:text-7xl sm:text-left font-bold sm:mt-8">
-				You put your apps <br /> <span class="text-secondary">main promise</span> <br /> right
-				<span class="underline decoration-primary">here</span>
+	<div class="flex flex-col lg:flex-row py-12 sm:py-24 gap-12 items-center">
+		<div class="flex-1">
+			<div
+				class="inline-flex items-center gap-2 bg-primary/10 text-primary text-sm font-semibold px-3 py-1 rounded-full mb-6"
+			>
+				<Zap size={14} />
+				AI-Powered · 60 seconds
 			</div>
-			<p class="mt-2 sm:mt-4 mb-6 sm:mb-8 text-md text-center sm:text-left sm:text-lg">
-				You can put some subtext here about with a further explanation <br
-					class="hidden sm:block"
-				/> of what features your app has to offer.
+			<h1 class="text-4xl sm:text-6xl font-bold leading-tight">
+				Win more clients with<br />
+				<span class="text-primary">proposals that close</span>
+			</h1>
+			<p class="mt-6 text-lg text-base-content/70 max-w-xl">
+				Stop spending hours on proposals that go nowhere. ScopeWise uses AI to generate
+				professional project proposals, scope-of-work documents, and pricing in under 60 seconds.
 			</p>
-			<div class="flex items-center justify-center sm:justify-start">
-				<a href="/" class="btn btn-primary text-lg w-full max-w-sm h-14">
-					<Ship class="mr-2" /> Your call to action
+			<div class="mt-8 flex flex-col sm:flex-row gap-4">
+				<a href="/login" class="btn btn-primary btn-lg gap-2">
+					Generate your first proposal free
+					<ArrowRight size={18} />
 				</a>
+				<a href="#pricing" class="btn btn-ghost btn-lg">See pricing</a>
+			</div>
+			<p class="mt-4 text-sm text-base-content/50">
+				No credit card required · 2 proposals free forever
+			</p>
+		</div>
+
+		<div class="flex-1 w-full max-w-lg">
+			<div class="card shadow-2xl bg-base-100 ring-2 ring-base-200">
+				<div class="card-body p-6">
+					<div class="flex items-center gap-2 mb-4">
+						<div class="w-3 h-3 rounded-full bg-red-400"></div>
+						<div class="w-3 h-3 rounded-full bg-yellow-400"></div>
+						<div class="w-3 h-3 rounded-full bg-green-400"></div>
+						<span class="text-xs text-base-content/40 ml-2">scopewise.app</span>
+					</div>
+					<div class="space-y-3">
+						<div class="bg-primary/10 rounded-lg p-4">
+							<p class="text-xs text-primary font-semibold uppercase tracking-wide mb-1">
+								Project Brief
+							</p>
+							<p class="text-sm text-base-content/80">
+								"Build an e-commerce site for my boutique clothing store. Need product pages,
+								shopping cart, Stripe payments, and a simple CMS."
+							</p>
+						</div>
+						<div class="flex items-center justify-center py-1">
+							<div class="flex items-center gap-2 text-primary text-sm font-medium">
+								<Zap size={16} class="animate-pulse" />
+								Generating proposal...
+							</div>
+						</div>
+						<div class="bg-base-200 rounded-lg p-4 space-y-2">
+							<p class="text-xs font-bold text-base-content/60 uppercase tracking-wide">
+								ScopeWise Proposal
+							</p>
+							<p class="text-sm font-semibold">Boutique E-Commerce Platform — $8,500</p>
+							<div class="space-y-1">
+								{#each ['✓ Executive Summary', '✓ Full Scope of Work', '✓ 4-Phase Milestone Plan', '✓ Pricing Breakdown', '✓ Payment Terms'] as item}
+									<p class="text-xs text-base-content/70">{item}</p>
+								{/each}
+							</div>
+							<div class="flex gap-2 mt-3">
+								<span class="badge badge-success badge-sm">Ready to send</span>
+								<span class="badge badge-ghost badge-sm">Share link</span>
+							</div>
+						</div>
+					</div>
+				</div>
 			</div>
 		</div>
-		<div class=" bg-gray-100 md:ml-5 p-10 flex-1 text-xl rounded-xl mt-8 text-center">
-			You can put lots of things in this section. A quick demo video of your product, a carousel of
-			images, some testimonials or relevant logos. Be creative!
+	</div>
+
+	<div class="pb-12 flex flex-col items-center">
+		<p class="text-sm text-base-content/50 mb-4">Built for independent creators</p>
+		<div class="flex flex-wrap justify-center gap-6 text-base-content/40 text-sm">
+			<span>Web Developers</span>
+			<span>·</span>
+			<span>UI/UX Designers</span>
+			<span>·</span>
+			<span>Digital Marketers</span>
+			<span>·</span>
+			<span>Dev Agencies</span>
 		</div>
 	</div>
 </Container>

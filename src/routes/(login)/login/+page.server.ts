@@ -87,7 +87,7 @@ export const actions = {
 			subject: `Your activation link for ${public_env.PUBLIC_PROJECT_NAME}`,
 			html: loginEmailHtmlTemplate({
 				product_url: PUBLIC_ORIGIN,
-				product_name: public_env.PUBLIC_PROJECT_NAME,
+				product_name: public_env.PUBLIC_PROJECT_NAME ?? 'ScopeWise',
 				action_url: verificationLink
 			}),
 			headers: {
